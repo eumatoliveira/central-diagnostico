@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de IA local</title>
+<style>
+  :root {font: 1rem/1.6 system-ui,sans-serif; color:#172034; background:#f5f6fa;}
+  main {max-width:52rem; margin:auto; padding:2rem 1rem;}
+  section {background:white; padding:1rem 1.4rem; margin-block:1rem; border:1px solid #dce0ec; border-radius:.75rem;}
+  pre {overflow:auto; padding:1rem; background:#212750; color:white; border-radius:.5rem;}
+  a {color:#343b72;} h2 {line-height:1.2;}
+</style>
+<main>
+  <a href="/">Voltar ao diagnóstico</a>
+  <h1>Guia de IA local</h1>
+  <p>Use um ambiente de teste, uma conta comum e dados públicos ou sintéticos no primeiro laboratório.</p>
+  <section>
+    <h2>1. Iniciar o Ollama em modo local</h2>
+    <p>Instale o Ollama pelo canal oficial. Feche uma instância já aberta antes de iniciar outra na mesma porta.</p>
+    <h3>Windows PowerShell</h3>
+    <pre>$env:OLLAMA_HOST = '127.0.0.1:11434'
+$env:OLLAMA_NO_CLOUD = '1'
+ollama serve</pre>
+    <h3>Linux</h3>
+    <pre>OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NO_CLOUD=1 ollama serve</pre>
+    <p><code>OLLAMA_HOST</code> limita a API à interface local. <code>OLLAMA_NO_CLOUD</code> desabilita os recursos de nuvem do Ollama. Se a instalação roda como serviço, aplique as variáveis ao serviço e confirme o endereço depois de reiniciar. Em máquinas compartilhadas, isole o serviço e suas credenciais por usuário.</p>
+    <pre>ollama pull gemma4:e2b
+ollama list
+ollama run gemma4:e2b</pre>
+    <p><code>pull</code> baixa o modelo e exige rede e espaço no disco. <code>list</code> mostra os modelos locais. <code>run</code> abre a conversa no terminal. Teste com um exemplo sintético antes de usar documentos reais.</p>
+    <p><a href="https://docs.ollama.com/faq">Configuração oficial do Ollama</a></p>
+  </section>
+  <section>
+    <h2>2. Verificar o serviço e os recursos</h2>
+    <h3>Windows PowerShell</h3>
+    <pre>Get-NetTCPConnection -LocalPort 11434 -State Listen
+Invoke-RestMethod http://127.0.0.1:11434/api/tags
+nvidia-smi</pre>
+    <h3>Linux</h3>
+    <pre>ss -ltn 'sport = :11434'
+curl --fail --silent --show-error http://127.0.0.1:11434/api/tags
+nvidia-smi</pre>
+    <p>A primeira linha confere onde a API escuta. Uma instância local deve aparecer em <code>127.0.0.1</code>. Uma escuta em <code>0.0.0.0</code> permite conexões por outras interfaces conforme a política de rede. A segunda linha consulta a lista de modelos. <code>nvidia-smi</code> mostra a GPU, o driver e o uso de memória quando disponível.</p>
+  </section>
+  <section>
+    <h2>3. Preparar, baixar e rotular dados</h2>
+    <p>Registre de onde veio cada conjunto, qual licença permite seu uso, a revisão, a data e o responsável. Remova segredos e dados pessoais antes de rotular. Separe treino, validação e teste antes de criar versões aumentadas do mesmo exemplo.</p>
+    <pre>python -m venv .venv
+.venv\Scripts\python.exe -m pip --version</pre>
+    <pre>python3 -m venv .venv
+.venv/bin/python -m pip --version</pre>
+    <p><code>venv</code> isola dependências do projeto. Use a primeira sequência no Windows e a segunda no Linux. Instale a CLI <code>hf</code> e a ferramenta de rotulação nesse ambiente seguindo suas instruções oficiais e fixando versões aprovadas.</p>
+    <pre>hf download ORGANIZACAO/CONJUNTO --repo-type dataset --revision COMMIT --include '*.parquet' --local-dir data/raw</pre>
+    <p>Substitua organização, conjunto e commit pelos do material aprovado. <code>--repo-type</code> seleciona o catálogo de dados. <code>--revision</code> fixa a versão. <code>--include</code> limita o formato e <code>--local-dir</code> escolhe a pasta. Inspecione o esquema, tamanho e amostras antes de importar.</p>
+    <p>No Label Studio, crie um projeto privado, escreva critérios de cada rótulo e pilote com uma amostra. Revise divergências entre anotadores, exporte os rótulos e versione o arquivo. Use uma categoria para casos ambíguos que precisam de revisão.</p>
+    <p><a href="https://huggingface.co/docs/hub/datasets-downloading">Download no Hugging Face Hub</a> · <a href="https://labelstud.io/guide/install.html">Instalação do Label Studio</a></p>
+  </section>
+  <section>
+    <h2>4. Treinar um adaptador e avaliar</h2>
+    <ol>
+      <li>Escolha um checkpoint com licença para fine-tuning, fixe a revisão e verifique a origem dos pesos. Prefira arquivos Safetensors de fonte aprovada. Mantenha código remoto desabilitado.</li>
+      <li>Meça o modelo base com um conjunto de teste congelado. Para classificação, acompanhe precisão e recall por classe. Para respostas, defina critérios e faça revisão humana por amostra.</li>
+      <li>Monte os pares de entrada e saída esperada. Comece com um treino supervisionado pequeno usando TRL e um adaptador LoRA. Registre seed, revisão de dados, versões das bibliotecas e configuração de treino.</li>
+      <li>Compare o adaptador com o modelo base no mesmo teste. Verifique vazamento entre conjuntos, regressão e exposição de dados. Promova apenas um artefato aprovado e mantenha o checkpoint base para reverter.</li>
+    </ol>
+    <pre>nvidia-smi --query-gpu=name,memory.used,memory.total,temperature.gpu --format=csv</pre>
+    <p>Durante o treino, a consulta acima mostra uso de memória e temperatura por GPU. Reduza batch ou comprimento de sequência se faltar memória. Em cluster, associe métricas ao nó e ao job antes de alterar os limites. O fine-tuning usa uma ferramenta de treino como TRL. O Ollama serve a etapa de inferência.</p>
+    <p><a href="https://huggingface.co/docs/trl/sft_trainer">Documentação de treino supervisionado no TRL</a></p>
+  </section>
+</main>
+</html>

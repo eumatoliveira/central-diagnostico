@@ -1,0 +1,10 @@
+[package]
+name = "central-relatorios"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+central-agente = { path = "../agente" }
+docx-rs = { version = "=0.4.22", default-features = false }
+rust_xlsxwriter = "=0.104.0"

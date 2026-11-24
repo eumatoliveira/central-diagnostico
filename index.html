@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="local-token" content="__LOCAL_TOKEN__">
+<meta name="backup-s3" content="__BACKUP_S3_ENABLED__">
+<title>Central de diagnóstico</title>
+<style>
+  :root { color-scheme: light; font: 18px/1.55 'Segoe UI', system-ui, sans-serif; color: #171f35; background: #f3f4f9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  main { max-width: 960px; padding: 30px clamp(16px, 5vw, 54px) 55px; margin: auto; }
+  header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
+  header strong { font-size: 19px; }
+  .hero { background: #212750; color: #fff; border-radius: 24px; padding: clamp(24px, 6vw, 48px); }
+  h1 { max-width: 15ch; font-size: clamp(35px, 6vw, 58px); line-height: 1.04; letter-spacing: -.045em; margin: 0; }
+  .hero p { color: #e4e7ff; max-width: 49ch; }
+  button { font: inherit; font-weight: 650; padding: 12px 18px; min-height: 48px; border: 1px solid transparent; border-radius: 10px; background: #e7e8ff; color: #20264c; cursor: pointer; }
+  button:disabled { opacity: .65; cursor: wait; }
+  :focus-visible { outline: 3px solid #7265d9; outline-offset: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 16px; }
+  article, details { background: #fff; border: 1px solid #dce0ec; border-radius: 14px; padding: 16px 20px; }
+  article h3 { margin: 0 0 8px; font-size: 17px; }
+  output { display: block; min-height: 2em; }
+  meter { width: 100%; height: 18px; accent-color: #5d50b6; }
+  details { margin-top: 16px; }
+  summary { cursor: pointer; font-weight: 650; min-height: 44px; padding-block: 8px; }
+  input { font: inherit; max-width: 100%; min-height: 44px; }
+  #next-step { padding: 1rem; background: #fff; border-left: 4px solid #5d50b6; }
+  li { margin-block: 8px; overflow-wrap: anywhere; }
+  #exports { margin-top: 16px; }
+  [hidden] { display: none; }
+</style>
+<main>
+  <header><strong>Central de diagnóstico</strong><span>Verificação local</span></header>
+  <section class="hero" aria-labelledby="title">
+    <h1 id="title">Como está este computador?</h1>
+    <p>Uma ferramenta gratuita para cuidar do seu computador no dia a dia. No Windows, ela funciona junto com a Segurança do Windows.</p>
+    <button id="run">Verificar meu computador</button>
+    <p id="status" role="status">Pronto para verificar.</p>
+  </section>
+  <section aria-labelledby="overview">
+    <h2 id="overview">Resultados da verificação</h2>
+    <p id="next-step" hidden></p>
+    <div class="grid">
+      <article><h3>Memória</h3><output id="ram">Aguardando diagnóstico</output><meter id="ram-meter" aria-label="Memória ocupada" min="0" max="100" hidden></meter></article>
+      <article><h3>Espaço no disco</h3><output id="disk">Aguardando diagnóstico</output><meter id="disk-meter" aria-label="Espaço ocupado no disco" min="0" max="100" hidden></meter></article>
+      <article><h3>Proteção do computador</h3><output id="protection">Aguardando diagnóstico</output></article>
+    </div>
+    <details><summary>Detalhes para suporte de TI</summary><p id="system">Execute o diagnóstico para ver os resultados.</p><ul id="events"></ul></details>
+    <section id="exports" hidden aria-label="Exportar relatório">
+      <button data-format="docx">Baixar Word</button>
+      <button data-format="pdf">Baixar PDF</button>
+      <button data-format="xlsx">Baixar Excel</button>
+      <button data-format="txt">Baixar texto</button>
+      <button data-format="json">Baixar dados para o portal</button>
+      <p id="export-status" role="status"></p>
+    </section>
+  </section>
+  <details>
+    <summary>Ferramentas e guias para suporte de TI</summary>
+    <p><a href="/guia-ia">Guia de IA local, dados e treinamento</a></p>
+    <details>
+      <summary>Refrigeração, desempenho e drivers</summary>
+      <p>Este teste mede quanto tempo o navegador leva para calcular SHA-256 de 32 MiB de dados em memória. Compare rodadas no mesmo computador e navegador.</p>
+      <button id="benchmark" type="button">Medir desempenho básico</button>
+      <p id="benchmark-status" role="status"></p>
+      <ul>
+        <li>Confirme o modelo da placa-mãe, CPU, GPU e cooler. O painel mostra sensores de GPU quando o driver oferece os dados. O percentual informado para a ventoinha da GPU é o valor comandado, não uma leitura física em RPM.</li>
+        <li>Para verificar bomba e ventoinhas, confira a leitura de RPM no UEFI ou utilitário oficial do fabricante. Se houver queda de rotação ou aumento incomum de temperatura, interrompa o teste e revise o equipamento.</li>
+        <li>Use um benchmark oficial compatível com o modelo para registrar uma linha de base com as configurações originais. Repita nas mesmas condições e compare temperatura, estabilidade e desempenho antes de considerar ajustes.</li>
+        <li>Se um programa citar uma DLL ausente, anote o nome do programa e a mensagem. Use a opção de reparo ou o instalador oficial. Para componentes do Windows, consulte as ferramentas oficiais de reparo.</li>
+      </ul>
+      <p><a href="https://docs.nvidia.com/deploy/nvidia-smi/" target="_blank" rel="noopener noreferrer">Referência dos sensores NVIDIA</a></p>
+    </details>
+    <details>
+      <summary>Diagnosticar rede deste computador ou servidor</summary>
+      <p>Consulte interfaces e rotas do próprio host. O resultado pode exibir endereços privados.</p>
+      <button id="network" type="button">Consultar rede local</button>
+      <p id="network-status" role="status"></p>
+      <div id="network-results" style="overflow-wrap:anywhere"></div>
+    </details>
+    <details>
+      <summary>Configurar um servidor local</summary>
+      <ol>
+        <li>Identifique o sistema, o papel do servidor e quem precisa de acesso.</li>
+        <li>Confirme o acesso administrativo e teste a restauração de um backup.</li>
+        <li>Compare atualizações, proteção e firewall com a referência do fabricante.</li>
+        <li>Aplique mudanças em uma janela de manutenção e repita a verificação.</li>
+      </ol>
+      <p><a href="https://learn.microsoft.com/en-us/windows-server/security/osconfig/osconfig-how-to-configure-security-baselines" target="_blank" rel="noopener noreferrer">Referência do Windows Server 2025</a></p>
+      <p><a href="https://documentation.ubuntu.com/server/explanation/security/" target="_blank" rel="noopener noreferrer">Referência do Ubuntu Server</a></p>
+    </details>
+    <details>
+      <summary>Revisar um cluster de GPUs NVIDIA</summary>
+      <ol>
+        <li>Identifique o modelo das GPUs, os nós e a topologia do cluster.</li>
+        <li>Confirme a separação das redes de administração, computação e armazenamento conforme a arquitetura instalada.</li>
+        <li>Verifique se DCGM coleta saúde, temperatura, memória e erros das GPUs compatíveis.</li>
+        <li>Associe os alertas ao nó e à carga. Programe diagnóstico aprofundado antes de intervir.</li>
+      </ol>
+      <p><a href="https://docs.nvidia.com/dgx-basepod/" target="_blank" rel="noopener noreferrer">Guias DGX BasePOD</a></p>
+      <p><a href="https://docs.nvidia.com/dgx-superpod/" target="_blank" rel="noopener noreferrer">Guias DGX SuperPOD</a></p>
+    </details>
+    <details>
+      <summary>Comissionar rack GPU e malha de rede</summary>
+      <ol>
+        <li>Registre o modelo exato, como HGX H100 ou H200, DGX, ou sistema Blackwell, e a topologia do fabricante.</li>
+        <li>Valide alimentação, refrigeração, firmware e caminhos redundantes de administração antes de mudar a rede.</li>
+        <li>Compare interfaces, velocidade, MTU e contadores com o projeto. Separe Ethernet, RoCE e InfiniBand conforme o ambiente.</li>
+        <li>Use o inventário GPU do diagnóstico e compare com a telemetria DCGM do cluster. Investigue discrepâncias por nó e carga.</li>
+      </ol>
+      <p><a href="https://docs.nvidia.com/networking-ethernet-software/nvue-reference/Show-Commands/Interface/" target="_blank" rel="noopener noreferrer">Consulta de interfaces em switches NVIDIA Cumulus com NVUE</a></p>
+    </details>
+    <details>
+      <summary>Revisar IBM Z integrado a um cluster de IA</summary>
+      <ol>
+        <li>Identifique LPARs, subsistemas, janelas de lote e o canal autorizado entre o mainframe e o cluster.</li>
+        <li>Peça à equipe IBM Z um resumo de desempenho dos monitores autorizados, preservando os dados transacionais.</li>
+        <li>Compare latência, falhas, filas e tempos de recuperação do gateway em homologação antes de alterar o ambiente.</li>
+      </ol>
+      <p><a href="https://www.ibm.com/docs/en/zos/3.1.0?topic=information-using-rmf-smf-monitor-zos-icsf-events" target="_blank" rel="noopener noreferrer">Referência IBM SMF e RMF</a></p>
+    </details>
+  </details>
+  <details>
+    <summary>Backup e restauração de arquivos</summary>
+    <p>Use o restic instalado neste computador. Escolha pastas que já existem e guarde a senha de recuperação em um lugar seguro.</p>
+    <form id="backup-form" autocomplete="off">
+      <p><label for="backup-operation">O que deseja fazer?</label>
+      <select id="backup-operation"><option value="iniciar">Criar repositório vazio</option><option value="salvar">Fazer backup</option><option value="listar">Listar cópias</option><option value="verificar">Conferir integridade</option><option value="restaurar">Restaurar uma cópia</option></select></p>
+      <p id="backup-target-row" hidden><label for="backup-target">Onde guardar o backup?</label>
+      <select id="backup-target"><option value="local">Pasta local</option><option value="remote">Armazenamento remoto configurado</option></select></p>
+      <p id="backup-repository-row"><label for="backup-repository">Pasta do repositório</label> <input id="backup-repository" maxlength="4096" required></p>
+      <p id="backup-folder-row" hidden><label id="backup-folder-label" for="backup-folder">Pasta dos arquivos</label> <input id="backup-folder" maxlength="4096" disabled></p>
+      <p id="backup-id-row" hidden><label for="backup-id">Identificador da cópia</label> <input id="backup-id" maxlength="64" pattern="[0-9a-fA-F]{64}" spellcheck="false" disabled></p>
+      <p><label for="backup-password">Senha do repositório</label> <input id="backup-password" type="password" maxlength="1024" required></p>
+      <button type="submit">Executar operação de backup</button>
+    </form>
+    <p id="backup-status" role="status"></p>
+    <ul id="backup-snapshots"></ul>
+  </details>
+  <section aria-labelledby="link-review-title">
+    <h2 id="link-review-title">Conferir um link antes de abrir</h2>
+    <p>Cole o endereço recebido por mensagem. A conferência acontece neste computador e não abre o site.</p>
+    <form id="link-review" autocomplete="off">
+      <label for="link-input">Endereço do link</label>
+      <input id="link-input" type="text" required maxlength="4096" spellcheck="false">
+      <p><label for="link-expected">Domínio oficial, se você já souber</label>
+      <input id="link-expected" type="text" maxlength="253" spellcheck="false" placeholder="exemplo.com.br" aria-describedby="link-reference">
+      <small id="link-reference">Use um domínio confirmado fora da mensagem que você recebeu.</small></p>
+      <button type="submit">Conferir link</button>
+    </form>
+    <p id="link-status" role="status"></p>
+    <ul id="link-findings"></ul>
+  </section>
+  <section aria-labelledby="file-check">
+    <h2 id="file-check">Revisar arquivo ou e-mail</h2>
+    <p>Escolha um arquivo ou um e-mail salvo neste computador para verificar sinais de risco. O arquivo fica neste dispositivo.</p>
+    <label for="file-input">Selecionar arquivo</label>
+    <input id="file-input" type="file">
+    <p><label id="clam-option" hidden><input id="clam-enabled" type="checkbox"> Verificar com ClamAV neste computador Linux</label></p>
+    <p id="file-status" role="status"></p>
+    <ul id="file-results"></ul>
+    <button id="scan" type="button" hidden>Iniciar varredura rápida do Defender</button>
+    <p id="scan-status" role="status"></p>
+  </section>
+  <section aria-labelledby="bitcoin-title">
+    <h2 id="bitcoin-title">Conferir destino Bitcoin offline</h2>
+    <p>Compare o endereço público confirmado por um canal confiável com o que aparece na sua carteira. Nunca cole chaves privadas ou palavras de recuperação.</p>
+    <label for="btc-trusted">Endereço público confirmado</label>
+    <input id="btc-trusted" maxlength="90" autocomplete="off" spellcheck="false">
+    <label for="btc-destination">Endereço exibido na carteira</label>
+    <input id="btc-destination" maxlength="90" autocomplete="off" spellcheck="false">
+    <button id="btc-compare" type="button">Comparar endereços</button>
+    <button id="btc-clear" type="button">Limpar</button>
+    <p id="btc-status" role="status"></p>
+    <p>A comparação é local. Confira também rede, valor e endereço na tela de assinatura da carteira.</p>
+  </section>
+</main>
+<script type="module" src="/ui.js"></script>
+</html>

@@ -1,0 +1,12 @@
+node_modules/
+agente/target/
+desktop/target/
+target/
+dist/
+referencias/
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.msix

@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Central de diagnóstico — proteção no Chrome",
+  "version": "0.1.0",
+  "description": "Bloqueia navegação em domínios adicionados à lista local.",
+  "permissions": ["declarativeNetRequestWithHostAccess"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "options_ui": {"page": "opcoes.html", "open_in_tab": true},
+  "action": {"default_popup": "opcoes.html"},
+  "web_accessible_resources": [{"resources": ["aviso.html"], "matches": ["http://*/*", "https://*/*"]}]
+}

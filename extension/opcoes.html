@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proteção no Chrome</title>
+<link rel="stylesheet" href="estilo.css">
+<main>
+  <h1>Proteção no Chrome</h1>
+  <form>
+    <label for="domains">Domínios bloqueados</label>
+    <p id="hint">Digite um domínio por linha. Seus subdomínios também serão bloqueados.</p>
+    <textarea id="domains" rows="8" cols="30" aria-describedby="hint" disabled></textarea>
+    <button type="submit" disabled>Salvar lista</button>
+  </form>
+  <p id="status" role="status"></p>
+  <details>
+    <summary>Conferir destinatário Bitcoin</summary>
+    <p>Compare o endereço público recebido por um canal confiável com o que aparece na carteira. Use somente endereços públicos.</p>
+    <form id="bitcoin-form" autocomplete="off">
+      <label for="trusted">Endereço da fonte confiável</label>
+      <input id="trusted" name="trusted" type="text" maxlength="100" required spellcheck="false" autocapitalize="off">
+      <label for="displayed">Endereço que aparece na carteira</label>
+      <input id="displayed" name="displayed" type="text" maxlength="100" required spellcheck="false" autocapitalize="off">
+      <button type="submit">Comparar endereços</button>
+      <output role="status" aria-live="polite"></output>
+    </form>
+  </details>
+</main>
+<script type="module" src="opcoes.mjs"></script>
+<script type="module" src="bitcoin.mjs"></script>
+</html>
